@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wholesale Bakery Financial Simulator</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            amber: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+            },
+            stone: {
+              50: '#fafaf9',
+              100: '#f5f5f4',
+              200: '#e7e5e4',
+              800: '#262626',
+              900: '#171717',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #faf9f6;
+      color: #1c1917;
+    }
+    input[type=range] {
+      accent-color: #d97706;
+    }
+    .custom-card {
+      background: #ffffff;
+      border: 1px solid rgba(229, 231, 235, 0.9);
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-12 antialiased">
+
+  <!-- Header Section -->
+  <header class="bg-stone-900 text-stone-100 border-b border-stone-800 sticky top-0 z-50 backdrop-blur-md bg-stone-900/95">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="bg-amber-500 p-2 rounded-xl text-stone-950 shadow-sm">
+          <i data-lucide="croissant" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-extrabold tracking-tight text-white">Bakery Financial Simulator</h1>
+          <p class="text-[11px] text-stone-400 font-medium">Cafe Supply & Break-Even Optimization Tool</p>
+        </div>
+      </div>
+
+      <!-- Quick Preset Actions -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-stone-400 font-medium hidden md:inline">Presets:</span>
+        <button onclick="loadPreset('default')" class="px-3 py-1.5 text-xs font-semibold bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg transition border border-stone-700/50">
+          3-Item Baseline
+        </button>
+        <button onclick="loadPreset('highMargin')" class="px-3 py-1.5 text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg transition">
+          High Margin Mix
+        </button>
+        <button onclick="loadPreset('fiveProducts')" class="px-3 py-1.5 text-xs font-semibold bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg transition border border-stone-700/50">
+          5-Item Full Bakery
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+
+    <!-- Top Key Metrics Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      
+      <!-- Metric 1: Monthly Break-Even Revenue -->
+      <div class="custom-card rounded-2xl p-5 border-l-4 border-l-amber-500">
+        <div class="flex justify-between items-start">
+          <span class="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Break-Even Sales</span>
+          <span class="p-1.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="indian-rupee" class="w-4 h-4"></i></span>
+        </div>
+        <div class="mt-2">
+          <div id="metric-be-revenue" class="text-2xl font-black text-stone-900 tracking-tight">₹0</div>
+          <p class="text-xs text-stone-500 mt-1 font-medium">Gross monthly revenue needed</p>
+        </div>
+      </div>
+
+      <!-- Metric 2: Weighted CM Ratio -->
+      <div class="custom-card rounded-2xl p-5 border-l-4 border-l-emerald-500">
+        <div class="flex justify-between items-start">
+          <span class="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Weighted CM Margin</span>
+          <span class="p-1.5 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="percent" class="w-4 h-4"></i></span>
+        </div>
+        <div class="mt-2">
+          <div id="metric-cm-ratio" class="text-2xl font-black text-stone-900 tracking-tight">0%</div>
+          <p class="text-xs text-stone-500 mt-1 font-medium">Average contribution margin</p>
+        </div>
+      </div>
+
+      <!-- Metric 3: Daily Target Revenue -->
+      <div class="custom-card rounded-2xl p-5 border-l-4 border-l-blue-500">
+        <div class="flex justify-between items-start">
+          <span class="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Daily Target Revenue</span>
+          <span class="p-1.5 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="calendar" class="w-4 h-4"></i></span>
+        </div>
+        <div class="mt-2">
+          <div id="metric-daily-revenue" class="text-2xl font-black text-stone-900 tracking-tight">₹0</div>
+          <p class="text-xs text-stone-500 mt-1 font-medium"><span id="metric-operating-days">26</span> working days/month</p>
+        </div>
+      </div>
+
+      <!-- Metric 4: Daily Total Units -->
+      <div class="custom-card rounded-2xl p-5 border-l-4 border-l-purple-500">
+        <div class="flex justify-between items-start">
+          <span class="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Daily Unit Target</span>
+          <span class="p-1.5 bg-purple-50 text-purple-600 rounded-xl"><i data-lucide="package" class="w-4 h-4"></i></span>
+        </div>
+        <div class="mt-2">
+          <div id="metric-daily-units" class="text-2xl font-black text-stone-900 tracking-tight">0 items</div>
+          <p class="text-xs text-stone-500 mt-1 font-medium">Total bakery items / day</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Content Layout Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Inputs & Product Manager (5 Columns) -->
+      <div class="lg:col-span-5 space-y-6">
+
+        <!-- Fixed Overhead Section -->
+        <div class="custom-card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-sm font-bold text-stone-900 flex items-center gap-2 tracking-tight">
+              <i data-lucide="building-2" class="w-4 h-4 text-amber-600"></i>
+              Monthly Fixed Overhead
+            </h2>
+            <span class="text-xs font-extrabold text-amber-700 bg-amber-100/70 border border-amber-200 px-2.5 py-1 rounded-full" id="total-fixed-cost-badge">₹95,000</span>
+          </div>
+
+          <div class="space-y-4 text-sm">
+            <!-- Rent -->
+            <div>
+              <div class="flex justify-between text-xs font-medium text-stone-600 mb-1">
+                <span>Facility Rent & Space</span>
+                <span id="label-rent" class="font-bold text-stone-800">₹20,000</span>
+              </div>
+              <input type="range" id="input-rent" min="5000" max="80000" step="1000" value="20000" class="w-full h-1.5 bg-stone-200 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Loan EMI Meter -->
+            <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-200/60">
+              <div class="flex justify-between text-xs font-semibold text-stone-700 mb-1">
+                <span class="flex items-center gap-1.5 text-amber-800">
+                  <i data-lucide="credit-card" class="w-3.5 h-3.5 text-amber-600"></i>
+                  Loan EMI Payment
+                </span>
+                <span id="label-loan-emi" class="font-extrabold text-amber-900">₹15,000</span>
+              </div>
+              <input type="range" id="input-loan-emi" min="0" max="50000" step="1000" value="15000" class="w-full h-1.5 bg-stone-200 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- GM Salary -->
+            <div>
+              <div class="flex justify-between text-xs font-medium text-stone-600 mb-1">
+                <span>General Manager Salary</span>
+                <span id="label-gm-salary" class="font-bold text-stone-800">₹30,000</span>
+              </div>
+              <input type="range" id="input-gm-salary" min="10000" max="100000" step="2500" value="30000" class="w-full h-1.5 bg-stone-200 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Baker & Helper Fixed Salaries -->
+            <div>
+              <div class="flex justify-between text-xs font-medium text-stone-600 mb-1">
+                <span>Baker & Staff Fixed Salaries</span>
+                <span id="label-worker-salary" class="font-bold text-stone-800">₹35,000</span>
+              </div>
+              <input type="range" id="input-worker-salary" min="0" max="120000" step="2500" value="35000" class="w-full h-1.5 bg-stone-200 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Utilities & Licenses -->
+            <div>
+              <div class="flex justify-between text-xs font-medium text-stone-600 mb-1">
+                <span>Fixed Utilities, Water & Electricity</span>
+                <span id="label-utilities" class="font-bold text-stone-800">₹10,000</span>
+              </div>
+              <input type="range" id="input-utilities" min="2000" max="40000" step="1000" value="10000" class="w-full h-1.5 bg-stone-200 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Operational Days Selector -->
+            <div class="pt-3 border-t border-stone-100 flex items-center justify-between">
+              <label for="input-op-days" class="text-xs font-semibold text-stone-700">Operating Days / Month:</label>
+              <select id="input-op-days" class="text-xs bg-stone-100/80 font-bold border border-stone-200 rounded-lg px-2.5 py-1 text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20">
+                <option value="22">22 Days (5 days/week)</option>
+                <option value="26" selected>26 Days (6 days/week)</option>
+                <option value="30">30 Days (7 days/week)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Manager Section -->
+        <div class="custom-card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-sm font-bold text-stone-900 flex items-center gap-2 tracking-tight">
+                <i data-lucide="cake" class="w-4 h-4 text-amber-600"></i>
+                Bakery Product Mix
+              </h2>
+              <p class="text-[11px] text-stone-500">Manage up to 5 items supplied to cafes</p>
+            </div>
+            <button id="btn-add-product" onclick="addProduct()" class="flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Item
+            </button>
+          </div>
+
+          <!-- Total Sales Mix Warning Badge -->
+          <div id="mix-warning" class="hidden mb-4 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex justify-between items-center">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i>
+              <span>Sales mix totals <strong id="mix-total-val">100%</strong></span>
+            </span>
+            <button onclick="normalizeMix()" class="text-xs font-bold underline hover:text-amber-900">Auto-Balance to 100%</button>
+          </div>
+
+          <!-- Product Cards Container -->
+          <div id="product-list" class="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+            <!-- Dynamic JS rendered product cards appear here -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Visual Charts & Cafe Calculator (7 Columns) -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- Chart Grid: Donut + Bar side-by-side -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          
+          <!-- Sales Mix Revenue Contribution (Donut) -->
+          <div class="custom-card rounded-2xl p-5">
+            <h3 class="text-xs font-bold text-stone-900 mb-0.5 flex items-center gap-2 tracking-tight">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-amber-600"></i>
+              Sales Mix Split
+            </h3>
+            <p class="text-[11px] text-stone-400 mb-3">Revenue share per item</p>
+            <div class="relative h-48 flex items-center justify-center">
+              <canvas id="salesMixChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Daily Unit Target Breakdown (Bar) -->
+          <div class="custom-card rounded-2xl p-5">
+            <h3 class="text-xs font-bold text-stone-900 mb-0.5 flex items-center gap-2 tracking-tight">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-amber-600"></i>
+              Daily Production Units
+            </h3>
+            <p class="text-[11px] text-stone-400 mb-3">Units needed per day to break even</p>
+            <div class="relative h-48">
+              <canvas id="dailyUnitsChart"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Cafe Client Account Calculator Widget -->
+        <div class="bg-stone-900 text-stone-100 rounded-2xl p-6 shadow-lg border border-stone-800">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="p-2 bg-amber-500 text-stone-950 rounded-xl shadow-sm">
+                <i data-lucide="store" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white tracking-tight">Cafe Client Target Calculator</h3>
+                <p class="text-[11px] text-stone-400">Determine how many cafe accounts you need to reach your goals</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+            
+            <!-- Controls -->
+            <div class="space-y-3.5">
+              <div>
+                <label class="text-[11px] font-medium text-stone-300 block mb-1">
+                  Avg. Daily Order Value per Cafe (₹):
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-stone-400 font-bold text-xs">₹</span>
+                  <input type="number" id="input-cafe-order" value="1000" min="200" step="50" class="w-full bg-stone-800/90 border border-stone-700/80 text-amber-400 font-bold pl-7 pr-3 py-1.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+                <p class="text-[10px] text-stone-500 mt-1">E.g., 20 Puffs + 10 Rolls + 5 Cakes = ₹1,000/day</p>
+              </div>
+
+              <div>
+                <label class="text-[11px] font-medium text-stone-300 block mb-1">
+                  Desired Monthly Net Profit Goal (₹):
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-stone-400 font-bold text-xs">₹</span>
+                  <input type="number" id="input-profit-target" value="40000" min="0" step="5000" class="w-full bg-stone-800/90 border border-stone-700/80 text-emerald-400 font-bold pl-7 pr-3 py-1.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+              </div>
+            </div>
+
+            <!-- Results Card -->
+            <div class="bg-stone-800/70 rounded-xl p-4 border border-stone-700/60 flex flex-col justify-between">
+              
+              <div>
+                <span class="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Required Cafe Clients</span>
+                
+                <div class="grid grid-cols-2 gap-2.5 mt-2.5">
+                  <div class="bg-stone-900/90 p-2.5 rounded-lg border border-stone-700/50">
+                    <span class="text-[9px] text-stone-400 uppercase font-bold">For Break-Even</span>
+                    <div id="cafe-count-be" class="text-lg font-extrabold text-amber-400 mt-0.5">0 Cafes</div>
+                    <span id="cafe-be-rev-sub" class="text-[10px] text-stone-400">₹0 / month</span>
+                  </div>
+
+                  <div class="bg-stone-900/90 p-2.5 rounded-lg border border-amber-500/20">
+                    <span class="text-[9px] text-emerald-400 uppercase font-bold">For Profit Goal</span>
+                    <div id="cafe-count-profit" class="text-lg font-extrabold text-emerald-400 mt-0.5">0 Cafes</div>
+                    <span id="cafe-profit-rev-sub" class="text-[10px] text-stone-400">₹0 / month</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-3 pt-2.5 border-t border-stone-700/60 text-[11px] text-stone-300 flex items-center gap-2">
+                <i data-lucide="info" class="w-3.5 h-3.5 text-amber-400 flex-shrink-0"></i>
+                <span>At <strong id="cafe-daily-items-est">50 items</strong>/cafe, you need to deliver <strong id="cafe-total-daily-items">0 items</strong> total daily.</span>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // Default Bakery Products State
+    let products = [
+      { id: 1, name: 'Puffs (Savory)', price: 20, margin: 30, mix: 50 },
+      { id: 2, name: 'Rolls / Pastries', price: 40, margin: 40, mix: 30 },
+      { id: 3, name: 'Cakes (Slices)', price: 80, margin: 50, mix: 20 }
+    ];
+
+    // Presets catalog
+    const PRESETS = {
+      default: [
+        { id: 1, name: 'Puffs (Savory)', price: 20, margin: 30, mix: 50 },
+        { id: 2, name: 'Rolls / Pastries', price: 40, margin: 40, mix: 30 },
+        { id: 3, name: 'Cakes (Slices)', price: 80, margin: 50, mix: 20 }
+      ],
+      highMargin: [
+        { id: 1, name: 'Puffs (Savory)', price: 25, margin: 35, mix: 20 },
+        { id: 2, name: 'Cream Rolls', price: 40, margin: 45, mix: 30 },
+        { id: 3, name: 'Specialty Cake Slices', price: 90, margin: 55, mix: 50 }
+      ],
+      fiveProducts: [
+        { id: 1, name: 'Puffs / Pockets', price: 20, margin: 30, mix: 35 },
+        { id: 2, name: 'Rolls & Buns', price: 30, margin: 35, mix: 25 },
+        { id: 3, name: 'Cookies (Pack)', price: 40, margin: 40, mix: 15 },
+        { id: 4, name: 'Sliced Loaves', price: 50, margin: 45, mix: 15 },
+        { id: 5, name: 'Theme Cake Slices', price: 80, margin: 50, mix: 10 }
+      ]
+    };
+
+    // Chart Instances
+    let salesMixChart = null;
+    let dailyUnitsChart = null;
+
+    window.onload = function() {
+      // Initialize Lucide icons
+      lucide.createIcons();
+
+      // Attach event listeners to inputs
+      const fixedInputs = ['input-rent', 'input-loan-emi', 'input-gm-salary', 'input-worker-salary', 'input-utilities', 'input-op-days', 'input-cafe-order', 'input-profit-target'];
+      fixedInputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', calculateAndRender);
+      });
+
+      // Render initial product UI and charts
+      renderProductList();
+      initCharts();
+      calculateAndRender();
+    };
+
+    // Load presets
+    function loadPreset(key) {
+      if (PRESETS[key]) {
+        products = JSON.parse(JSON.stringify(PRESETS[key]));
+        renderProductList();
+        calculateAndRender();
+      }
+    }
+
+    function renderProductList() {
+      const container = document.getElementById('product-list');
+      container.innerHTML = '';
+
+      products.forEach((prod) => {
+        const card = document.createElement('div');
+        card.className = "bg-stone-50/80 border border-stone-200/80 rounded-xl p-3 space-y-2.5 transition hover:border-amber-300";
+        card.innerHTML = `
+          <div class="flex justify-between items-center gap-2">
+            <input type="text" value="${prod.name}" onchange="updateProduct(${prod.id}, 'name', this.value)"
+              class="font-bold text-stone-800 bg-transparent border-b border-dashed border-stone-300 focus:border-amber-500 focus:outline-none text-xs sm:text-sm w-full">
+            
+            ${products.length > 1 ? `
+              <button onclick="removeProduct(${prod.id})" class="text-stone-400 hover:text-red-500 p-1 rounded-lg transition" title="Delete product">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            ` : ''}
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <!-- Price -->
+            <div>
+              <label class="text-[9px] uppercase font-bold text-stone-400 block mb-0.5">Price (₹)</label>
+              <input type="number" min="5" max="1000" step="5" value="${prod.price}" onchange="updateProduct(${prod.id}, 'price', parseFloat(this.value))"
+                class="w-full font-bold bg-white border border-stone-200 rounded-lg p-1 text-stone-800 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            </div>
+
+            <!-- Margin % -->
+            <div>
+              <label class="text-[9px] uppercase font-bold text-stone-400 block mb-0.5">Margin %</label>
+              <input type="number" min="10" max="90" step="1" value="${prod.margin}" onchange="updateProduct(${prod.id}, 'margin', parseFloat(this.value))"
+                class="w-full font-bold bg-white border border-stone-200 rounded-lg p-1 text-emerald-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            </div>
+
+            <!-- Sales Mix % -->
+            <div>
+              <label class="text-[9px] uppercase font-bold text-stone-400 block mb-0.5">Sales Mix %</label>
+              <input type="number" min="0" max="100" step="5" value="${prod.mix}" onchange="updateProduct(${prod.id}, 'mix', parseFloat(this.value))"
+                class="w-full font-bold bg-white border border-stone-200 rounded-lg p-1 text-amber-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center text-[10px] text-stone-500 pt-1 border-t border-stone-200/60">
+            <span>Unit CM: <strong class="text-stone-800">₹${((prod.price * prod.margin) / 100).toFixed(2)}</strong></span>
+            <span>Var Cost: <strong class="text-stone-800">₹${(prod.price * (1 - prod.margin/100)).toFixed(2)}</strong></span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      lucide.createIcons();
+      document.getElementById('btn-add-product').disabled = products.length >= 5;
+    }
+
+    function addProduct() {
+      if (products.length >= 5) return;
+      const newId = Date.now();
+      products.push({
+        id: newId,
+        name: `Item ${products.length + 1}`,
+        price: 30,
+        margin: 35,
+        mix: 10
+      });
+      normalizeMix();
+      renderProductList();
+      calculateAndRender();
+    }
+
+    function removeProduct(id) {
+      if (products.length <= 1) return;
+      products = products.filter(p => p.id !== id);
+      normalizeMix();
+      renderProductList();
+      calculateAndRender();
+    }
+
+    function updateProduct(id, key, val) {
+      const prod = products.find(p => p.id === id);
+      if (prod) {
+        prod[key] = isNaN(val) ? 0 : val;
+        calculateAndRender();
+        renderProductList();
+      }
+    }
+
+    function normalizeMix() {
+      const totalMix = products.reduce((acc, p) => acc + (p.mix || 0), 0);
+      if (totalMix === 0) return;
+      products.forEach(p => {
+        p.mix = Math.round((p.mix / totalMix) * 100);
+      });
+      renderProductList();
+      calculateAndRender();
+    }
+
+    function calculateAndRender() {
+      // 1. Read Fixed Costs
+      const rent = parseFloat(document.getElementById('input-rent').value) || 0;
+      const loanEmi = parseFloat(document.getElementById('input-loan-emi').value) || 0;
+      const gmSalary = parseFloat(document.getElementById('input-gm-salary').value) || 0;
+      const workerSalary = parseFloat(document.getElementById('input-worker-salary').value) || 0;
+      const utilities = parseFloat(document.getElementById('input-utilities').value) || 0;
+      const opDays = parseInt(document.getElementById('input-op-days').value) || 26;
+
+      const totalFixedOverhead = rent + loanEmi + gmSalary + workerSalary + utilities;
+
+      // Update Overhead UI labels
+      document.getElementById('label-rent').innerText = `₹${rent.toLocaleString()}`;
+      document.getElementById('label-loan-emi').innerText = `₹${loanEmi.toLocaleString()}`;
+      document.getElementById('label-gm-salary').innerText = `₹${gmSalary.toLocaleString()}`;
+      document.getElementById('label-worker-salary').innerText = `₹${workerSalary.toLocaleString()}`;
+      document.getElementById('label-utilities').innerText = `₹${utilities.toLocaleString()}`;
+      document.getElementById('total-fixed-cost-badge').innerText = `₹${totalFixedOverhead.toLocaleString()}`;
+      document.getElementById('metric-operating-days').innerText = opDays;
+
+      // 2. Validate Mix %
+      const totalMix = products.reduce((acc, p) => acc + (p.mix || 0), 0);
+      const mixWarning = document.getElementById('mix-warning');
+      const mixTotalVal = document.getElementById('mix-total-val');
+      if (Math.abs(totalMix - 100) > 0.5) {
+        mixWarning.classList.remove('hidden');
+        mixTotalVal.innerText = `${totalMix}%`;
+      } else {
+        mixWarning.classList.add('hidden');
+      }
+
+      // 3. Compute Weighted Average Contribution Margin
+      let weightedCMRatio = 0;
+      const effectiveMixTotal = totalMix > 0 ? totalMix : 100;
+
+      products.forEach(p => {
+        const mixShare = (p.mix || 0) / effectiveMixTotal;
+        const marginRatio = (p.margin || 0) / 100;
+        weightedCMRatio += (marginRatio * mixShare);
+      });
+
+      const safeCMRatio = weightedCMRatio > 0 ? weightedCMRatio : 0.01;
+
+      // 4. Compute Break-Even Targets
+      const breakEvenRevenue = Math.ceil(totalFixedOverhead / safeCMRatio);
+      const dailyRevenueTarget = Math.ceil(breakEvenRevenue / opDays);
+
+      let totalDailyUnits = 0;
+      let totalMonthlyUnits = 0;
+
+      const productTargetData = products.map(p => {
+        const mixShare = (p.mix || 0) / effectiveMixTotal;
+        const prodRevenueMonthly = breakEvenRevenue * mixShare;
+        const prodUnitsMonthly = p.price > 0 ? Math.ceil(prodRevenueMonthly / p.price) : 0;
+        const prodUnitsDaily = Math.ceil(prodUnitsMonthly / opDays);
+
+        totalMonthlyUnits += prodUnitsMonthly;
+        totalDailyUnits += prodUnitsDaily;
+
+        return {
+          name: p.name,
+          price: p.price,
+          mixShare: mixShare,
+          monthlyRevenue: prodRevenueMonthly,
+          monthlyUnits: prodUnitsMonthly,
+          dailyUnits: prodUnitsDaily
+        };
+      });
+
+      // 5. Update Key Metrics UI
+      document.getElementById('metric-be-revenue').innerText = `₹${breakEvenRevenue.toLocaleString()}`;
+      document.getElementById('metric-cm-ratio').innerText = `${(safeCMRatio * 100).toFixed(1)}%`;
+      document.getElementById('metric-daily-revenue').innerText = `₹${dailyRevenueTarget.toLocaleString()}`;
+      document.getElementById('metric-daily-units').innerText = `${totalDailyUnits.toLocaleString()} items`;
+
+      // 6. Cafe Account Requirement Calculation
+      const avgCafeOrderDaily = parseFloat(document.getElementById('input-cafe-order').value) || 1000;
+      const profitTargetMonthly = parseFloat(document.getElementById('input-profit-target').value) || 0;
+
+      const totalRevenueNeededForProfit = breakEvenRevenue + Math.ceil(profitTargetMonthly / safeCMRatio);
+
+      const dailyRevenueForBE = breakEvenRevenue / opDays;
+      const dailyRevenueForProfit = totalRevenueNeededForProfit / opDays;
+
+      const cafesNeededBE = Math.ceil(dailyRevenueForBE / (avgCafeOrderDaily || 1));
+      const cafesNeededProfit = Math.ceil(dailyRevenueForProfit / (avgCafeOrderDaily || 1));
+
+      document.getElementById('cafe-count-be').innerText = `${cafesNeededBE} ${cafesNeededBE === 1 ? 'Cafe' : 'Cafes'}`;
+      document.getElementById('cafe-be-rev-sub').innerText = `₹${breakEvenRevenue.toLocaleString()} / mo`;
+
+      document.getElementById('cafe-count-profit').innerText = `${cafesNeededProfit} ${cafesNeededProfit === 1 ? 'Cafe' : 'Cafes'}`;
+      document.getElementById('cafe-profit-rev-sub').innerText = `₹${totalRevenueNeededForProfit.toLocaleString()} / mo`;
+
+      const estAvgUnitPrice = products.reduce((acc, p) => acc + (p.price * (p.mix / effectiveMixTotal)), 0) || 30;
+      const estItemsPerCafe = Math.round(avgCafeOrderDaily / estAvgUnitPrice);
+      document.getElementById('cafe-daily-items-est').innerText = `~${estItemsPerCafe} items`;
+      document.getElementById('cafe-total-daily-items').innerText = `${(cafesNeededBE * estItemsPerCafe).toLocaleString()} items`;
+
+      // 7. Update Charts
+      updateCharts(productTargetData);
+    }
+
+    function initCharts() {
+      // 1. Sales Mix Donut Chart
+      const ctxMix = document.getElementById('salesMixChart').getContext('2d');
+      salesMixChart = new Chart(ctxMix, {
+        type: 'doughnut',
+        data: {
+          labels: [],
+          datasets: [{
+            data: [],
+            backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 10, family: "'Plus Jakarta Sans', sans-serif" }, boxWidth: 12 } }
+          },
+          cutout: '70%'
+        }
+      });
+
+      // 2. Daily Units Bar Chart
+      const ctxBar = document.getElementById('dailyUnitsChart').getContext('2d');
+      dailyUnitsChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Daily Units',
+            data: [],
+            backgroundColor: '#d97706',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, grid: { color: '#f3f4f6' }, title: { display: true, text: 'Units / Day', font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    function updateCharts(productTargets) {
+      // Update Donut Chart
+      salesMixChart.data.labels = productTargets.map(p => p.name);
+      salesMixChart.data.datasets[0].data = productTargets.map(p => p.mixShare * 100);
+      salesMixChart.update();
+
+      // Update Bar Chart
+      dailyUnitsChart.data.labels = productTargets.map(p => p.name);
+      dailyUnitsChart.data.datasets[0].data = productTargets.map(p => p.dailyUnits);
+      dailyUnitsChart.update();
+    }
+  </script>
+</body>
+</html>
