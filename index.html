@@ -52,7 +52,6 @@
       border: 1px solid rgba(229, 231, 235, 0.9);
       box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
     }
-    /* Hide number input spinners for clean UI */
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { 
       -webkit-appearance: none; 
@@ -74,7 +73,7 @@
         </div>
         <div>
           <h1 class="text-lg font-extrabold tracking-tight text-white">Bakery Financial Simulator</h1>
-          <p class="text-[11px] text-stone-400 font-medium">Cafe Supply & Break-Even Optimization Tool</p>
+          <p class="text-[11px] text-stone-400 font-medium">Per-Item Batch Size & Multi-Bake Time Simulator</p>
         </div>
       </div>
 
@@ -136,18 +135,33 @@
         </div>
       </div>
 
-      <!-- Metric 4: Daily Total Units -->
-      <div class="custom-card rounded-2xl p-5 border-l-4 border-l-purple-500">
+      <!-- Metric 4: Daily Total Units vs Baking Time Required -->
+      <div class="custom-card rounded-2xl p-5 border-l-4 border-l-purple-500" id="metric-capacity-card">
         <div class="flex justify-between items-start">
-          <span class="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Daily Unit Target</span>
-          <span class="p-1.5 bg-purple-50 text-purple-600 rounded-xl"><i data-lucide="package" class="w-4 h-4"></i></span>
+          <span class="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Daily Baking Time</span>
+          <span class="p-1.5 bg-purple-50 text-purple-600 rounded-xl"><i data-lucide="clock" class="w-4 h-4"></i></span>
         </div>
         <div class="mt-2">
-          <div id="metric-daily-units" class="text-2xl font-black text-stone-900 tracking-tight">0 items</div>
-          <p class="text-xs text-stone-500 mt-1 font-medium">Total bakery items / day</p>
+          <div id="metric-baking-hours" class="text-2xl font-black text-stone-900 tracking-tight">0.0 hrs</div>
+          <p class="text-xs text-stone-500 mt-1 font-medium" id="metric-oven-cap-sub">Capacity: 10.0 oven-hrs</p>
         </div>
       </div>
 
+    </div>
+
+    <!-- Capacity Warning Banner -->
+    <div id="oven-capacity-warning" class="hidden mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-900">
+      <div class="flex items-start gap-3">
+        <div class="p-2 bg-red-100 text-red-600 rounded-xl">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <div class="flex-1">
+          <h4 class="text-sm font-bold text-red-900">Baking Capacity Exceeded!</h4>
+          <p class="text-xs text-red-700 mt-0.5" id="oven-warning-text">
+            The required baking time exceeds your total available oven hours.
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Main Content Layout Grid -->
@@ -155,6 +169,34 @@
 
       <!-- Left Column: Inputs & Product Manager (5 Columns) -->
       <div class="lg:col-span-5 space-y-6">
+
+        <!-- Oven Hardware Constraints Card -->
+        <div class="custom-card rounded-2xl p-6 border-2 border-amber-500/20">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-bold text-stone-900 flex items-center gap-2 tracking-tight">
+              <i data-lucide="flame" class="w-4 h-4 text-amber-600"></i>
+              Oven Hardware & Shift Setup
+            </h2>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">Capacity</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs mb-3">
+            <div>
+              <label class="text-[10px] font-bold text-stone-500 uppercase block mb-1">Active Ovens</label>
+              <input type="number" id="input-num-ovens" value="2" min="1" max="10" step="1" class="w-full font-bold bg-stone-100/80 border border-stone-200 rounded-lg p-2 text-stone-800 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            </div>
+
+            <div>
+              <label class="text-[10px] font-bold text-stone-500 uppercase block mb-1">Shift Hours / Day</label>
+              <input type="number" id="input-shift-hours" value="5" min="1" max="24" step="0.5" class="w-full font-bold bg-stone-100/80 border border-stone-200 rounded-lg p-2 text-stone-800 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            </div>
+          </div>
+
+          <div class="bg-amber-50/70 p-3 rounded-xl border border-amber-200/60 flex justify-between items-center text-xs">
+            <span class="text-stone-600 font-medium">Total Available Oven Hours:</span>
+            <span class="font-extrabold text-amber-900 text-sm" id="oven-max-hours-text">10.0 Oven Hours</span>
+          </div>
+        </div>
 
         <!-- Fixed Overhead Section -->
         <div class="custom-card rounded-2xl p-6">
@@ -180,7 +222,7 @@
               <input type="range" id="input-rent" min="0" max="150000" step="500" value="20000" class="w-full h-1.5 bg-stone-200 rounded-lg cursor-pointer">
             </div>
 
-            <!-- Loan EMI Meter -->
+            <!-- Loan EMI -->
             <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-200/60">
               <div class="flex justify-between items-center text-xs font-semibold text-stone-700 mb-1">
                 <span class="flex items-center gap-1.5 text-amber-800">
@@ -207,7 +249,7 @@
               <input type="range" id="input-gm-salary" min="0" max="150000" step="500" value="30000" class="w-full h-1.5 bg-stone-200 rounded-lg cursor-pointer">
             </div>
 
-            <!-- Baker & Helper Fixed Salaries -->
+            <!-- Staff Salaries -->
             <div>
               <div class="flex justify-between items-center text-xs font-medium text-stone-600 mb-1">
                 <span>Baker & Staff Fixed Salaries</span>
@@ -219,7 +261,7 @@
               <input type="range" id="input-worker-salary" min="0" max="150000" step="500" value="15000" class="w-full h-1.5 bg-stone-200 rounded-lg cursor-pointer">
             </div>
 
-            <!-- Utilities & Licenses -->
+            <!-- Utilities -->
             <div>
               <div class="flex justify-between items-center text-xs font-medium text-stone-600 mb-1">
                 <span>Fixed Utilities, Water & Electricity</span>
@@ -231,7 +273,7 @@
               <input type="range" id="input-utilities" min="0" max="80000" step="500" value="10000" class="w-full h-1.5 bg-stone-200 rounded-lg cursor-pointer">
             </div>
 
-            <!-- Operational Days Selector -->
+            <!-- Operating Days -->
             <div class="pt-3 border-t border-stone-100 flex items-center justify-between">
               <label for="input-op-days" class="text-xs font-semibold text-stone-700">Operating Days / Month:</label>
               <select id="input-op-days" class="text-xs bg-stone-100/80 font-bold border border-stone-200 rounded-lg px-2.5 py-1 text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20">
@@ -251,7 +293,7 @@
                 <i data-lucide="cake" class="w-4 h-4 text-amber-600"></i>
                 Bakery Product Mix
               </h2>
-              <p class="text-[11px] text-stone-500">Manage up to 5 items supplied to cafes</p>
+              <p class="text-[11px] text-stone-500">Price, Margin %, Mix %, Batch Size & Bake Time per item</p>
             </div>
             <button id="btn-add-product" onclick="addProduct()" class="flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Item
@@ -268,7 +310,7 @@
           </div>
 
           <!-- Product Cards Container -->
-          <div id="product-list" class="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+          <div id="product-list" class="space-y-3 max-h-[620px] overflow-y-auto pr-1">
             <!-- Dynamic JS rendered product cards appear here -->
           </div>
         </div>
@@ -384,31 +426,31 @@
   </main>
 
   <script>
-    // Default Bakery Products State
+    // Default Bakery Products State (with custom batchSize AND bakeTime per item)
     let products = [
-      { id: 1, name: 'Puffs (Savory)', price: 20, margin: 30, mix: 50 },
-      { id: 2, name: 'Rolls / Pastries', price: 40, margin: 40, mix: 30 },
-      { id: 3, name: 'Cakes (Slices)', price: 80, margin: 50, mix: 20 }
+      { id: 1, name: 'Puffs (Savory)', price: 20, margin: 30, mix: 50, batchSize: 40, bakeTime: 45 },
+      { id: 2, name: 'Rolls / Pastries', price: 40, margin: 40, mix: 30, batchSize: 20, bakeTime: 45 },
+      { id: 3, name: 'Cakes (Slices)', price: 80, margin: 50, mix: 20, batchSize: 12, bakeTime: 60 }
     ];
 
     // Presets catalog
     const PRESETS = {
       default: [
-        { id: 1, name: 'Puffs (Savory)', price: 20, margin: 30, mix: 50 },
-        { id: 2, name: 'Rolls / Pastries', price: 40, margin: 40, mix: 30 },
-        { id: 3, name: 'Cakes (Slices)', price: 80, margin: 50, mix: 20 }
+        { id: 1, name: 'Puffs (Savory)', price: 20, margin: 30, mix: 50, batchSize: 40, bakeTime: 45 },
+        { id: 2, name: 'Rolls / Pastries', price: 40, margin: 40, mix: 30, batchSize: 20, bakeTime: 45 },
+        { id: 3, name: 'Cakes (Slices)', price: 80, margin: 50, mix: 20, batchSize: 12, bakeTime: 60 }
       ],
       highMargin: [
-        { id: 1, name: 'Puffs (Savory)', price: 25, margin: 35, mix: 20 },
-        { id: 2, name: 'Cream Rolls', price: 40, margin: 45, mix: 30 },
-        { id: 3, name: 'Specialty Cake Slices', price: 90, margin: 55, mix: 50 }
+        { id: 1, name: 'Puffs (Savory)', price: 25, margin: 35, mix: 20, batchSize: 40, bakeTime: 45 },
+        { id: 2, name: 'Cream Rolls', price: 40, margin: 45, mix: 30, batchSize: 25, bakeTime: 40 },
+        { id: 3, name: 'Specialty Cake Slices', price: 90, margin: 55, mix: 50, batchSize: 10, bakeTime: 60 }
       ],
       fiveProducts: [
-        { id: 1, name: 'Puffs / Pockets', price: 20, margin: 30, mix: 35 },
-        { id: 2, name: 'Rolls & Buns', price: 30, margin: 35, mix: 25 },
-        { id: 3, name: 'Cookies (Pack)', price: 40, margin: 40, mix: 15 },
-        { id: 4, name: 'Sliced Loaves', price: 50, margin: 45, mix: 15 },
-        { id: 5, name: 'Theme Cake Slices', price: 80, margin: 50, mix: 10 }
+        { id: 1, name: 'Puffs / Pockets', price: 20, margin: 30, mix: 35, batchSize: 40, bakeTime: 45 },
+        { id: 2, name: 'Rolls & Buns', price: 30, margin: 35, mix: 25, batchSize: 30, bakeTime: 35 },
+        { id: 3, name: 'Cookies (Pack)', price: 40, margin: 40, mix: 15, batchSize: 20, bakeTime: 25 },
+        { id: 4, name: 'Sliced Loaves', price: 50, margin: 45, mix: 15, batchSize: 15, bakeTime: 50 },
+        { id: 5, name: 'Theme Cake Slices', price: 80, margin: 50, mix: 10, batchSize: 8, bakeTime: 60 }
       ]
     };
 
@@ -426,7 +468,6 @@
     ];
 
     window.onload = function() {
-      // Initialize Lucide icons
       lucide.createIcons();
 
       // Bind dynamic slider-number syncing for overhead inputs
@@ -446,18 +487,16 @@
         });
       });
 
-      // Attach event listeners to other fixed inputs
-      ['input-op-days', 'input-cafe-order', 'input-profit-target'].forEach(id => {
+      // Attach event listeners
+      ['input-num-ovens', 'input-shift-hours', 'input-op-days', 'input-cafe-order', 'input-profit-target'].forEach(id => {
         document.getElementById(id).addEventListener('input', calculateAndRender);
       });
 
-      // Render initial product UI and charts
       renderProductList();
       initCharts();
       calculateAndRender();
     };
 
-    // Load presets
     function loadPreset(key) {
       if (PRESETS[key]) {
         products = JSON.parse(JSON.stringify(PRESETS[key]));
@@ -485,26 +524,35 @@
             ` : ''}
           </div>
 
-          <div class="grid grid-cols-3 gap-2 text-xs">
-            <!-- Price -->
+          <div class="grid grid-cols-5 gap-1.5 text-xs">
             <div>
-              <label class="text-[9px] uppercase font-bold text-stone-400 block mb-0.5">Price (₹)</label>
+              <label class="text-[8px] uppercase font-bold text-stone-400 block mb-0.5">Price (₹)</label>
               <input type="number" min="5" max="1000" step="5" value="${prod.price}" onchange="updateProduct(${prod.id}, 'price', parseFloat(this.value))"
                 class="w-full font-bold bg-white border border-stone-200 rounded-lg p-1 text-stone-800 focus:outline-none focus:ring-1 focus:ring-amber-500">
             </div>
 
-            <!-- Margin % -->
             <div>
-              <label class="text-[9px] uppercase font-bold text-stone-400 block mb-0.5">Margin %</label>
+              <label class="text-[8px] uppercase font-bold text-stone-400 block mb-0.5">Margin %</label>
               <input type="number" min="10" max="90" step="1" value="${prod.margin}" onchange="updateProduct(${prod.id}, 'margin', parseFloat(this.value))"
                 class="w-full font-bold bg-white border border-stone-200 rounded-lg p-1 text-emerald-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
             </div>
 
-            <!-- Sales Mix % -->
             <div>
-              <label class="text-[9px] uppercase font-bold text-stone-400 block mb-0.5">Sales Mix %</label>
+              <label class="text-[8px] uppercase font-bold text-stone-400 block mb-0.5">Mix %</label>
               <input type="number" min="0" max="100" step="5" value="${prod.mix}" onchange="updateProduct(${prod.id}, 'mix', parseFloat(this.value))"
                 class="w-full font-bold bg-white border border-stone-200 rounded-lg p-1 text-amber-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            </div>
+
+            <div>
+              <label class="text-[8px] uppercase font-bold text-stone-400 block mb-0.5">Batch Size</label>
+              <input type="number" min="1" max="500" step="1" value="${prod.batchSize || 20}" onchange="updateProduct(${prod.id}, 'batchSize', parseFloat(this.value))"
+                class="w-full font-bold bg-white border border-amber-300 rounded-lg p-1 text-amber-900 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            </div>
+
+            <div>
+              <label class="text-[8px] uppercase font-bold text-stone-400 block mb-0.5">Bake (Mins)</label>
+              <input type="number" min="5" max="180" step="5" value="${prod.bakeTime || 45}" onchange="updateProduct(${prod.id}, 'bakeTime', parseFloat(this.value))"
+                class="w-full font-bold bg-white border border-stone-200 rounded-lg p-1 text-stone-800 focus:outline-none focus:ring-1 focus:ring-amber-500">
             </div>
           </div>
 
@@ -528,7 +576,9 @@
         name: `Item ${products.length + 1}`,
         price: 30,
         margin: 35,
-        mix: 10
+        mix: 10,
+        batchSize: 20,
+        bakeTime: 45
       });
       normalizeMix();
       renderProductList();
@@ -563,7 +613,15 @@
     }
 
     function calculateAndRender() {
-      // 1. Read Fixed Costs from inputs
+      // 1. Oven Hardware & Shift Constraints
+      const numOvens = parseFloat(document.getElementById('input-num-ovens').value) || 1;
+      const shiftHours = parseFloat(document.getElementById('input-shift-hours').value) || 5;
+
+      const availableShiftMinutes = shiftHours * 60 * numOvens;
+      const availableOvenHoursTotal = (shiftHours * numOvens).toFixed(1);
+      document.getElementById('oven-max-hours-text').innerText = `${availableOvenHoursTotal} Total Oven Hours (${numOvens} Oven${numOvens > 1 ? 's' : ''} × ${shiftHours}h Shift)`;
+
+      // 2. Fixed Costs
       const rent = parseFloat(document.getElementById('num-rent').value) || 0;
       const loanEmi = parseFloat(document.getElementById('num-loan-emi').value) || 0;
       const gmSalary = parseFloat(document.getElementById('num-gm-salary').value) || 0;
@@ -573,11 +631,10 @@
 
       const totalFixedOverhead = rent + loanEmi + gmSalary + workerSalary + utilities;
 
-      // Update Overhead Badge UI
       document.getElementById('total-fixed-cost-badge').innerText = `₹${totalFixedOverhead.toLocaleString()}`;
       document.getElementById('metric-operating-days').innerText = opDays;
 
-      // 2. Validate Mix %
+      // 3. Sales Mix Validation
       const totalMix = products.reduce((acc, p) => acc + (p.mix || 0), 0);
       const mixWarning = document.getElementById('mix-warning');
       const mixTotalVal = document.getElementById('mix-total-val');
@@ -588,7 +645,7 @@
         mixWarning.classList.add('hidden');
       }
 
-      // 3. Compute Weighted Average Contribution Margin
+      // 4. Weighted CM Margin
       let weightedCMRatio = 0;
       const effectiveMixTotal = totalMix > 0 ? totalMix : 100;
 
@@ -600,12 +657,12 @@
 
       const safeCMRatio = weightedCMRatio > 0 ? weightedCMRatio : 0.01;
 
-      // 4. Compute Break-Even Targets
+      // 5. Break-Even Calculations
       const breakEvenRevenue = Math.ceil(totalFixedOverhead / safeCMRatio);
       const dailyRevenueTarget = Math.ceil(breakEvenRevenue / opDays);
 
       let totalDailyUnits = 0;
-      let totalMonthlyUnits = 0;
+      let totalBakeMinutesRequired = 0;
 
       const productTargetData = products.map(p => {
         const mixShare = (p.mix || 0) / effectiveMixTotal;
@@ -613,8 +670,14 @@
         const prodUnitsMonthly = p.price > 0 ? Math.ceil(prodRevenueMonthly / p.price) : 0;
         const prodUnitsDaily = Math.ceil(prodUnitsMonthly / opDays);
 
-        totalMonthlyUnits += prodUnitsMonthly;
+        // Per-item batch size logic
+        const itemBatchSize = Math.max(1, p.batchSize || 1);
+        const batchesNeeded = Math.ceil(prodUnitsDaily / itemBatchSize);
+        const itemBakeTimeMins = p.bakeTime || 45;
+        const itemTotalBakeMinutes = batchesNeeded * itemBakeTimeMins;
+
         totalDailyUnits += prodUnitsDaily;
+        totalBakeMinutesRequired += itemTotalBakeMinutes;
 
         return {
           name: p.name,
@@ -622,17 +685,42 @@
           mixShare: mixShare,
           monthlyRevenue: prodRevenueMonthly,
           monthlyUnits: prodUnitsMonthly,
-          dailyUnits: prodUnitsDaily
+          dailyUnits: prodUnitsDaily,
+          batchSize: itemBatchSize,
+          bakeTime: itemBakeTimeMins,
+          batches: batchesNeeded
         };
       });
 
-      // 5. Update Key Metrics UI
+      // 6. Check Time/Shift Feasibility
+      const capacityWarningBanner = document.getElementById('oven-capacity-warning');
+      const capacityMetricCard = document.getElementById('metric-capacity-card');
+      const ovenCapSub = document.getElementById('metric-oven-cap-sub');
+      const metricBakingHours = document.getElementById('metric-baking-hours');
+
+      const totalBakeHours = (totalBakeMinutesRequired / 60).toFixed(1);
+      metricBakingHours.innerText = `${totalBakeHours} hrs`;
+      ovenCapSub.innerText = `Limit: ${availableOvenHoursTotal} oven-hrs (${totalDailyUnits} items)`;
+
+      if (totalBakeMinutesRequired > availableShiftMinutes) {
+        const excessHours = ((totalBakeMinutesRequired - availableShiftMinutes) / 60).toFixed(1);
+        
+        capacityWarningBanner.classList.remove('hidden');
+        document.getElementById('oven-warning-text').innerText = 
+          `Breaking even requires ${totalBakeHours} oven hours per day, which exceeds your total available limit of ${availableOvenHoursTotal} oven hours (${numOvens} oven(s) × ${shiftHours}h shift) by ${excessHours} hours. Increase prices, increase batch sizes, add another oven, or extend your shift.`;
+
+        capacityMetricCard.className = "custom-card rounded-2xl p-5 border-l-4 border-l-red-500 bg-red-50/20";
+      } else {
+        capacityWarningBanner.classList.add('hidden');
+        capacityMetricCard.className = "custom-card rounded-2xl p-5 border-l-4 border-l-purple-500";
+      }
+
+      // 7. Update UI Cards
       document.getElementById('metric-be-revenue').innerText = `₹${breakEvenRevenue.toLocaleString()}`;
       document.getElementById('metric-cm-ratio').innerText = `${(safeCMRatio * 100).toFixed(1)}%`;
       document.getElementById('metric-daily-revenue').innerText = `₹${dailyRevenueTarget.toLocaleString()}`;
-      document.getElementById('metric-daily-units').innerText = `${totalDailyUnits.toLocaleString()} items`;
 
-      // 6. Cafe Account Requirement Calculation
+      // 8. Cafe Account Target Calculation
       const avgCafeOrderDaily = parseFloat(document.getElementById('input-cafe-order').value) || 1000;
       const profitTargetMonthly = parseFloat(document.getElementById('input-profit-target').value) || 0;
 
@@ -655,12 +743,11 @@
       document.getElementById('cafe-daily-items-est').innerText = `~${estItemsPerCafe} items`;
       document.getElementById('cafe-total-daily-items').innerText = `${(cafesNeededBE * estItemsPerCafe).toLocaleString()} items`;
 
-      // 7. Update Charts
+      // 9. Update Charts
       updateCharts(productTargetData);
     }
 
     function initCharts() {
-      // 1. Sales Mix Donut Chart
       const ctxMix = document.getElementById('salesMixChart').getContext('2d');
       salesMixChart = new Chart(ctxMix, {
         type: 'doughnut',
@@ -683,7 +770,6 @@
         }
       });
 
-      // 2. Daily Units Bar Chart
       const ctxBar = document.getElementById('dailyUnitsChart').getContext('2d');
       dailyUnitsChart = new Chart(ctxBar, {
         type: 'bar',
@@ -711,12 +797,10 @@
     }
 
     function updateCharts(productTargets) {
-      // Update Donut Chart
       salesMixChart.data.labels = productTargets.map(p => p.name);
       salesMixChart.data.datasets[0].data = productTargets.map(p => p.mixShare * 100);
       salesMixChart.update();
 
-      // Update Bar Chart
       dailyUnitsChart.data.labels = productTargets.map(p => p.name);
       dailyUnitsChart.data.datasets[0].data = productTargets.map(p => p.dailyUnits);
       dailyUnitsChart.update();
